@@ -1,24 +1,59 @@
-import logo from './logo.svg';
-import './App.css';
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-empty-pattern */
+import React, { useEffect } from "react";
+import "./App.css";
+import Checkout from "./Checkout";
+import Header from "./Header";
+import Home from "./Home";
+import Login from "./Login";
+import Payment from "./Payment";
+import Orders from './Orders';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { auth } from "./firebase";
+import { useStateValue } from "./StateProvider";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+
+const promise = loadStripe("pk_test_51LBptlAym0K88gmiEX9x2RBW6G5zwJSNhi5Dlu1Vc6003AH2ZpDsWibqcQXw09RQwV0yX6WAT2fznSchfjeABURt00cf6wLfGV");
 
 function App() {
+  const [{}, dispatch] = useStateValue('');
+
+  //runs only once with app component loads
+  useEffect(() => {   
+
+    auth.onAuthStateChanged(authUser => {
+      console.log("The user is  >>>>> ", authUser);
+      
+      //user logs in or was logged in (puts user in Data Layer)
+      if (authUser) {
+        dispatch({
+          type: "SET_USER",
+          user: authUser,
+        });
+      
+        //user is logged out
+      } else {
+        dispatch({
+          type: "SET_USER",
+          user: null,
+        });
+      }
+    })
+  }, []);
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <Router>
+      <div className="app">
+      <Routes>
+        <Route path = "/" element={[<Header />, <Home />]} />
+        <Route path = "/orders" element={[<Header />, <Orders />]} />
+        <Route path="/checkout" element={[<Header />, <Checkout />]} />
+        <Route path="/login" element={[<Login />]} />
+        <Route path="/payment" element={[<Header />, <Elements stripe={promise}><Payment /></Elements> ]} />
+      </Routes>
     </div>
+  </Router>
   );
 }
 
